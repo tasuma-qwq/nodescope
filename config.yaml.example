@@ -1,0 +1,81 @@
+#-------------------核心配置-----------------
+# 极速模式 (True/False)
+# True: 使用 API 直接检测，速度快但不包含 Bot 比例
+# False: 使用浏览器模拟检测，包含 Bot 比例，速度较慢
+fast_mode: True
+
+# 你的 Clash 配置文件绝对路径 例如 'C:\Users\YourName\AppData\Roaming\clash\config.yaml'
+yaml_path: ''
+
+# Clash External Controller 外部控制地址
+clash_api_url: "http://127.0.0.1:9097"
+
+# Clash External Controller 外部控制密码 (如果没设置密码留空即可)
+clash_api_secret: ""
+
+
+#-------------------可选配置-----------------
+
+# 优先数据源 (ping0 或 ippure), 默认 ping0
+source: "ping0"
+
+# 是否允许降级 (True/False), 默认 True
+# True: 主源失败时尝试备用源
+fallback: true
+
+
+# 输出配置文件后缀
+output_suffix: "_checked"
+
+# 全局代理组名称 (通常默认是 GLOBAL 或 Proxy)
+selector_name: "GLOBAL"
+
+# 非极速的浏览器模式下是否隐藏浏览器窗口 (True/False)
+# True: 隐藏 (后台运行)
+# False: 显示 (调试用)
+headless: true
+
+# Node跳过检测的关键字列表
+skip_keywords:
+  - "剩余"
+  - "重置"
+  - "到期"
+  - "有效期"
+  - "官网"
+  - "网址"
+  - "更新"
+  - "公告"
+  - "建议"
+
+# 多源交叉验证（P0-1）：未配置 Key 的深度源自动跳过，仅 ip-api 免费源常驻
+enable_multi_source: true
+abuseipdb_key: ""
+ip2location_key: ""
+ipqs_key: ""
+
+# DNSBL 黑名单一票否决（P1）：命中任一黑名单库即判黑名单；使用 dnspython 查询
+dnsbl_enabled: true
+dnsbl_zones:
+  - "zen.spamhaus.org"
+  - "bl.spamcop.net"
+  - "dnsbl.sorbs.net"
+  - "dnsbl.dronebl.org"
+  - "b.barracudacentral.org"
+  - "bl.blocklist.de"
+  - "tor.dnsbl.sectoor.de"
+
+# DNS 泄漏检测（P1）：通过代理请求 edns.ip-api.com，比对 DNS 出口与流量出口 IP
+dns_leak_enabled: true
+
+# 检测历史仅本机保存，history/ 已忽略；不自动将出口 IP、节点名提交到仓库。
+history_enabled: true
+history_auto_commit: false
+
+# 并行检测：临时为每个节点开独立端口并发检测（mihomo listeners 机制）。
+# 检测期间 Clash 配置会被临时调整，结束后自动恢复；任何失败自动降级为串行检测。
+parallel_check: true
+
+# 可选服务与 IPv6 探针仅供参考，不计入评分，不证明账号资格。
+unlock_enabled: false
+ipv6_enabled: false
+

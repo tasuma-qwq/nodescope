@@ -1,0 +1,18 @@
+# SYNTHETIC DEMO ONLY. These addresses are documentation ranges, not working proxies.
+proxies:
+  - name: Demo-A
+    type: ss
+    server: 192.0.2.1
+    port: 443
+    cipher: aes-128-gcm
+    password: demo-only-not-a-real-proxy
+  - name: Demo-B
+    type: ss
+    server: 192.0.2.2
+    port: 443
+    cipher: aes-128-gcm
+    password: demo-only-not-a-real-proxy
+proxy-groups:
+  - name: Demo
+    type: select
+    proxies: [Demo-A, Demo-B, DIRECT]

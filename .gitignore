@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+
+# Clsh Automator Specific
+*.yaml
+!config.yaml.example
+*_checked.yaml
+run.log
+*.map
+
+# VS Code
+.vscode/
+
+# Brain/Artifacts
+.gemini/
+.agent/
+brain/
+work/
+exports/
+history/
+.env
+.env.*
+!.env.example
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/

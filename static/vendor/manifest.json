@@ -1,0 +1,56 @@
+[
+  {
+    "path": "pico/pico.min.css",
+    "url": "https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css",
+    "sha256": "fbc9a63fc9fc9f72d12fd7fc9806e11fa9f77ae4f9cad146b27003a1119ba3db",
+    "bytes": 83319
+  },
+  {
+    "path": "pico/LICENSE",
+    "url": "https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/LICENSE.md",
+    "sha256": "afaff063e044233f917b7807dccab022f09dca474f92b642846bee4850655bbf",
+    "bytes": 1066
+  },
+  {
+    "path": "alpine/cdn.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js",
+    "sha256": "3ed1eed252488921df65e363d6715deb04d7f92aaedb9e52199fdf73cb1e0ad3",
+    "bytes": 44758
+  },
+  {
+    "path": "codemirror/codemirror.min.css",
+    "url": "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css",
+    "sha256": "11077112ab6955d29fe41085c62365c7d4a2f00a570c7475e2aec2a8cbc85fc4",
+    "bytes": 6037
+  },
+  {
+    "path": "codemirror/material-darker.min.css",
+    "url": "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css",
+    "sha256": "36f7867d65852095da9627424ca794ab24b58187ccbdfdf637fda7b57ab417f8",
+    "bytes": 2133
+  },
+  {
+    "path": "codemirror/codemirror.min.js",
+    "url": "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js",
+    "sha256": "f102bb61fb2ac45c3a611847edd9948faad0ab22a83a2dfa9974be5031079b15",
+    "bytes": 170535
+  },
+  {
+    "path": "codemirror/yaml.min.js",
+    "url": "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js",
+    "sha256": "a6925495d3ccd0197fbc85df616cae466f3ba7a04b885db3c4e7d6952a859623",
+    "bytes": 1819
+  },
+  {
+    "path": "codemirror/LICENSE",
+    "url": "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/LICENSE",
+    "sha256": "168a4becc968f5001e2ee2e0291b6e4daabafc1894a11ade1e11d56e96096e07",
+    "bytes": 1113
+  },
+  {
+    "path": "alpine/LICENSE",
+    "url": "https://raw.githubusercontent.com/alpinejs/alpine/v3.14.9/LICENSE.md",
+    "sha256": "5f05c4925dd3edf049a70b4b403ac0dd43b20f72501d9359911ddd25d5ac657d",
+    "bytes": 1092
+  }
+]

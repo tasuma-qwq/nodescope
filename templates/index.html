@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NodeScope · 节点透镜</title>
+    <link rel="stylesheet" href="/static/vendor/pico/pico.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- CodeMirror for YAML syntax highlighting -->
+    <link rel="stylesheet" href="/static/vendor/codemirror/codemirror.min.css">
+    <link rel="stylesheet"
+        href="/static/vendor/codemirror/material-darker.min.css">
+    <script src="/static/vendor/codemirror/codemirror.min.js"></script>
+    <script src="/static/vendor/codemirror/yaml.min.js"></script>
+    <script defer src="/static/vendor/alpine/cdn.min.js"></script>
+</head>
+
+<body>
+    <main class="container" x-data="app()" x-init="init()">
+        <!-- Header -->
+        <header style="padding-bottom: 0; margin-bottom: 1rem;">
+            {% if demo_notice %}<p role="status">演示模式：全部为模拟数据，不连接 Clash，不代表真实检测结果。</p>{% endif %}
+            <h1 style="margin-bottom: 0.2rem; font-size: 2rem;">
+                ⚡ <span style="color: #10b981;">NodeScope</span> 节点透镜
+            </h1>
+            <p style="font-size: 0.85rem; margin-bottom: 0.5rem; opacity: 0.7;">
+                粘贴订阅 → 检测节点 → 对比风险 → 导出。配置和历史保存在本机，检测会访问外部服务。
+            </p>
+        </header>
+
+        <!-- Input Section (6:4 ratio) -->
+        <div class="grid input-grid">
+            <!-- YAML Input (60%) -->
+            <div class="yaml-column">
+                <label>粘贴 YAML 订阅内容</label>
+                <div id="yaml-editor" class="yaml-editor"></div>
+            </div>
+
+            <!-- Config Panel -->
+            <div>
+
+                <div class="config-panel">
+                    <!-- 核心配置 -->
+                    <fieldset>
+                        <legend>核心配置</legend>
+                        <label style="margin-bottom: 0.5rem;">
+                            <input type="checkbox" x-model="config.fast_mode">
+                            极速模式 (使用API接口，无Bot占比)
+                        </label>
+
+                        <!-- Fast Mode Sub-options -->
+                        <div x-show="config.fast_mode" x-transition
+                            style="margin-bottom: 1.5rem; padding-left: 1.5rem; border-left: 2px solid rgba(255,255,255,0.1);">
+                            <label style="margin-bottom: 0.5rem; font-size: 0.9em;">
+                                优先数据源
+                                <select x-model="config.source" style="margin-top: 0.2rem; padding: 0.4rem;">
+                                    <option value="ping0">Ping0 (有共享人数，不稳定建议勾选降级)</option>
+                                    <option value="ippure">IPPure (无共享人数，稳定)</option>
+                                </select>
+                            </label>
+                            <label style="font-size: 0.9em;">
+                                <input type="checkbox" x-model="config.fallback">
+                                数据源降级 (优选失败时尝试备用)
+                            </label>
+                        </div>
+                        <label>
+                            Clash API 地址 （Clash-设置-外部控制查看）
+                            <input type="text" x-model="config.clash_api_url" placeholder="http://127.0.0.1:9097">
+                        </label>
+                        <label>
+                            Clash API 密钥（同上查看）
+                            <input type="text" x-model="config.clash_api_secret" placeholder="留空表示无密码">
+                        </label>
+                    </fieldset>
+
+                    <!-- 可选配置 (默认折叠) -->
+                    <details class="config-details" style="margin-top: -0.5rem;">
+                        <summary>可选配置</summary>
+
+                        <label>
+                            输出文件后缀
+                            <input type="text" x-model="config.output_suffix" placeholder="_checked">
+                        </label>
+                        <label>
+                            代理组名称 (用于切换节点)
+                            <input type="text" x-model="config.selector_name" placeholder="GLOBAL">
+                        </label>
+                        <!-- 仅非极速模式显示 -->
+                        <label x-show="!config.fast_mode" x-transition>
+                            <input type="checkbox" x-model="config.headless">
+                            隐藏浏览器窗口
+                        </label>
+
+                        <label
+                            style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            跳过关键词 (逗号分隔)
+                            <small
+                                style="display: block; color: var(--text-muted); margin-bottom: 0.5rem;">包含以下词的节点将被跳过</small>
+                            <input type="text" x-model="config.skip_keywords_str"
+                                placeholder="剩余,重置,到期,有效期,官网,网址,更新,公告,建议">
+                        </label>
+
+                        <label
+                            style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            <input type="checkbox" x-model="config.enable_multi_source">
+                            多源交叉验证（ip-api 常驻；深度源需 Key）
+                        </label>
+                        <label>
+                            AbuseIPDB Key
+                            <input type="password" x-model="config.abuseipdb_key" placeholder="留空则跳过">
+                        </label>
+                        <label>
+                            IP2Location Key
+                            <input type="password" x-model="config.ip2location_key" placeholder="留空则跳过">
+                        </label>
+                        <label>
+                            IPQS Key
+                            <input type="password" x-model="config.ipqs_key" placeholder="留空则跳过">
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="config.dnsbl_enabled">
+                            DNSBL 黑名单一票否决
+                        </label>
+                        <label>
+                            DNSBL 库（逗号分隔）
+                            <input type="text" x-model="config.dnsbl_zones_str"
+                                placeholder="zen.spamhaus.org,bl.spamcop.net,dnsbl.sorbs.net,dnsbl.dronebl.org,b.barracudacentral.org,bl.blocklist.de,tor.dnsbl.sectoor.de">
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="config.dns_leak_enabled">
+                            DNS 泄漏检测（仅供参考）
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="config.unlock_enabled">
+                            AI/流媒体解锁（GPT/Gemini/Claude/Netflix，仅供参考不计分，较慢）
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="config.ipv6_enabled">
+                            IPv6 出口探测（仅供参考不计分）
+                        </label>
+                    </details>
+
+
+
+
+                    <div class="button-group">
+                        <button @click="startCheck" :disabled="isRunning || !yamlContent.trim()" :aria-busy="isRunning">
+                            <span x-show="!isRunning">🚀 开始检测</span>
+                            <span x-show="isRunning">检测中...</span>
+                        </button>
+                        <button @click="stopCheck" x-show="isRunning" class="secondary">
+                            ⏹ 停止
+                        </button>
+                    </div>
+                    <div class="webrtc-panel"
+                        style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <strong style="font-size: 0.9rem;">浏览器泄漏检测</strong>
+                            <button type="button" class="small outline" @click="runWebrtcCheck"
+                                :disabled="webrtcRunning" :aria-busy="webrtcRunning">
+                                WebRTC 泄漏检测
+                            </button>
+                        </div>
+                        <small style="display: block; color: var(--text-muted); margin-top: 0.3rem;">
+                            检测浏览器是否绕过代理暴露真实 IP。请先完成节点检测。
+                        </small>
+                        <div id="webrtc-result"
+                            style="margin-top: 0.5rem; font-size: 0.85rem; white-space: pre-wrap;"
+                            x-text="webrtcMessage"></div>
+                        <small x-show="webrtcError" class="error-text" x-text="webrtcError"
+                            style="display: block; margin-top: 0.5rem;"></small>
+                    </div>
+                    <small x-show="error" x-text="error" class="error-text"
+                        style="display: block; text-align: center; margin-top: 0.5rem; transition: all 0.3s ease;"></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- History snapshots (read-only) -->
+        <section class="results-section" style="margin-top: 1.5rem;">
+            <div class="results-header">
+                <h3>历史记录</h3>
+                <div class="results-actions">
+                    <button type="button" class="small outline" @click="loadHistory"
+                        :disabled="historyLoading" :aria-busy="historyLoading">刷新</button>
+                    <button type="button" class="small outline" @click="loadTrend"
+                        :disabled="trendLoading" :aria-busy="trendLoading">趋势</button>
+                    <button type="button" class="small secondary" x-show="selectedHistory"
+                        @click="closeHistory">关闭明细</button>
+                </div>
+            </div>
+            <small x-show="historyError" class="error-text" x-text="historyError"
+                style="display: block; margin-bottom: 0.5rem;"></small>
+            <div x-show="!historyLoading && !historyItems.length"
+                style="color: var(--text-muted); font-size: 0.9rem;">暂无历史快照</div>
+            <ul x-show="historyItems.length" style="list-style: none; padding: 0; margin: 0;">
+                <template x-for="item in historyItems" :key="item.name">
+                    <li @click="openHistory(item.name)"
+                        style="padding: 0.6rem 0.8rem; margin-bottom: 0.4rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                            <span x-text="item.created_at || item.name"></span>
+                            <span x-text="(item.node_count || 0) + ' 节点'"></span>
+                        </div>
+                        <small style="color: var(--text-muted);"
+                            x-text="historySummaryText(item.summary)"></small>
+                    </li>
+                </template>
+            </ul>
+
+            <div x-show="trendOpen" style="margin-top: 1rem;">
+                <div class="results-header">
+                    <h4 style="margin: 0;">历史趋势</h4>
+                    <button type="button" class="small secondary" @click="trendOpen = false">关闭</button>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0;">
+                    <select x-model="trendNode" style="width: auto; margin: 0; min-width: 12rem;">
+                        <template x-for="n in trendNodeOptions()" :key="n">
+                            <option :value="n" x-text="n"></option>
+                        </template>
+                    </select>
+                    <button type="button" class="small" @click="loadTrend"
+                        :disabled="trendLoading">查看趋势</button>
+                </div>
+                <small x-show="trendError" class="error-text" x-text="trendError"
+                    style="display: block; margin-bottom: 0.5rem;"></small>
+                <div x-show="!trendLoading && !historyItems.length"
+                    style="color: var(--text-muted); font-size: 0.9rem;">暂无历史快照</div>
+                <div x-show="!trendLoading && historyItems.length && !trendItems.length"
+                    style="color: var(--text-muted); font-size: 0.9rem;">该节点暂无历史趋势</div>
+                <div x-show="!trendLoading && trendItems.length">
+                    <div x-show="trendChartPoints().length < 2"
+                        style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">数据不足</div>
+                    <div x-show="trendChartPoints().length >= 2" style="margin-bottom: 0.75rem;">
+                        <svg viewBox="0 0 600 160" width="100%" height="160"
+                            style="max-width: 100%; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                            <polyline :points="trendPolyline()" fill="none" stroke="#10b981"
+                                stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                            <g x-html="trendCirclesHtml()"></g>
+                            <g x-html="trendAxisHtml()"></g>
+                        </svg>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table role="grid">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>综合分</th>
+                                    <th>等级</th>
+                                    <th>黑名单</th>
+                                    <th>DNS 泄漏</th>
+                                    <th>来源</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(row, idx) in trendItems" :key="idx">
+                                    <tr>
+                                        <td x-text="trendTimeLabel(row.time)"></td>
+                                        <td x-text="trendCell(row.risk_score)"></td>
+                                        <td x-text="trendCell(row.risk_level)"></td>
+                                        <td x-text="row.dnsbl_blacklisted ? '⛔' : '—'"></td>
+                                        <td>
+                                            <span x-show="row.dns_leak_state === 'leak'"
+                                                class="risk-red">泄漏</span>
+                                            <span x-show="row.dns_leak_state !== 'leak'"
+                                                x-text="trendCell(row.dns_leak_state)"></span>
+                                        </td>
+                                        <td x-text="trendCell(row.source)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="selectedHistory" style="margin-top: 1rem;">
+                <div class="results-header">
+                    <h4 style="margin: 0;">快照明细</h4>
+                    <button type="button" class="small secondary" @click="closeHistory">关闭</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table role="grid">
+                        <thead>
+                            <tr>
+                                <th>name</th>
+                                <th>ip</th>
+                                <th>pure_score</th>
+                                <th>risk</th>
+                                <th>geo</th>
+                                <th>isp</th>
+                                <th>asn</th>
+                                <th>ip_type</th>
+                                <th>dnsbl</th>
+                                <th>dns_leak</th>
+                                <th>status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template
+                                x-for="(node, idx) in (selectedHistory && selectedHistory.nodes) || []"
+                                :key="idx">
+                                <tr>
+                                    <td x-text="histCell(node.name)"></td>
+                                    <td x-text="histCell(node.ip)"></td>
+                                    <td x-text="histCell(node.pure_score)"></td>
+                                    <td x-text="histCell(node.risk)"></td>
+                                    <td x-text="histCell(node.geo)"></td>
+                                    <td x-text="histCell(node.isp)"></td>
+                                    <td x-text="histCell(node.asn)"></td>
+                                    <td x-text="histCell(node.ip_type)"></td>
+                                    <td x-text="histDnsbl(node)"></td>
+                                    <td x-text="histCell(node.dns_leak_state)"></td>
+                                    <td x-text="histCell(node.status)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Table -->
+        <section x-show="nodes.length > 0" class="results-section">
+            <div class="results-header">
+                <h3>节点列表 (<span x-text="nodes.length"></span>)</h3>
+
+                <!-- Compact Progress -->
+                <div x-show="showProgress"
+                    style="flex: 1; margin: 0 1.5rem; display: flex; flex-direction: column; justify-content: center; min-width: 200px;">
+                    <progress :value="progress" :max="total"
+                        style="width: 100%; height: 6px; margin-bottom: 2px;"></progress>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #888;">
+                        <span x-text="currentNode"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;"></span>
+                        <span x-text="`${progress}/${total}`"></span>
+                    </div>
+                </div>
+
+                <div class="results-actions">
+                    <button class="small outline" @click="cycleSortByScore" x-text="sortByScoreLabel()"></button>
+                    <a href="/api/report" role="button" class="small outline" download="nodescope-report.json">匿名报告</a>
+                    <button class="small" @click="exportYaml" :disabled="selected.length === 0">
+                        📥 导出选中 (<span x-text="selected.length"></span>)
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-scroll" role="region" aria-label="节点检测结果，可横向滚动" tabindex="0">
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" @change="toggleAll" :checked="selected.length === nodes.length"></th>
+                        <th>节点名</th>
+                        <th>IP</th>
+                        <th>延迟</th>
+                        <th>归属地</th>
+                        <th>ISP/ASN</th>
+                        <th @click="cycleSortByScore" style="cursor:pointer" title="按综合分排序">综合分</th>
+                        <th>风控</th>
+                        <th>风险标记</th>
+                        <th>DNS 泄漏 <small style="opacity:0.6">仅供参考</small></th>
+                        <th x-show="config.unlock_enabled">解锁 <small style="opacity:0.6">仅供参考</small></th>
+                        <th x-show="config.ipv6_enabled">IPv6</th>
+                        <th x-show="config.fast_mode">共享</th>
+                        <th x-show="!config.fast_mode">Bot</th>
+                        <th>类型</th>
+                        <th>数据源</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="node in sortedNodes()" :key="node.id">
+                        <tr :class="{'degraded': node.source !== 'ping0'}">
+                            <td>
+                                <input type="checkbox" :value="node.id" x-model="selected">
+                            </td>
+                            <td>
+                                <span x-show="editingId !== node.id" x-text="node.name" @dblclick="startEdit(node)"
+                                    class="editable"></span>
+                                <input x-show="editingId === node.id" x-model="editValue" @blur="saveEdit(node)"
+                                    @keyup.enter="saveEdit(node)" @keyup.escape="cancelEdit" class="inline-edit">
+                            </td>
+                            <td x-text="node.ip"></td>
+                            <td><span :class="delayClass(node)" x-text="formatDelay(node)"></span></td>
+                            <td x-text="node.geo || '—'"></td>
+                            <td x-text="(node.isp || node.asn) ? ((node.isp || '') + (node.isp && node.asn ? ' · ' : '') + (node.asn || '')) : '—'"></td>
+                            <td><span :class="riskScoreClass(node.risk_level)" x-text="formatRiskScore(node)"></span></td>
+                            <td><span :class="getRiskClass(node.risk)" x-text="node.risk"></span></td>
+                            <td><span :class="getRiskMark(node).cls" x-text="getRiskMark(node).text"></span></td>
+                            <td>
+                                <span x-show="node.dns_leak_state === 'leak'" class="risk-red"
+                                    x-text="'⚠ ' + (node.dns_ip || '')"></span>
+                                <span x-show="node.dns_leak_state === 'clean'" class="risk-green">✓ 代理</span>
+                                <span x-show="node.dns_leak_state !== 'leak' && node.dns_leak_state !== 'clean'">—</span>
+                            </td>
+                            <td x-show="config.unlock_enabled" x-text="node.unlock_summary || '—'"
+                                :title="node.unlock_summary || ''"></td>
+                            <td x-show="config.ipv6_enabled">
+                                <span x-show="node.ipv6" class="risk-green" x-text="formatIPv6(node)"></span>
+                                <span x-show="!node.ipv6">—</span>
+                            </td>
+                            <td x-show="config.fast_mode"><span :class="getSharedClass(node.shared)"
+                                    x-text="node.shared || 'N/A'"></span></td>
+                            <td x-show="!config.fast_mode"><span :class="getRiskClass(node.bot)"
+                                    x-text="node.bot || 'N/A'"></span></td>
+                            <td x-text="`${node.type}|${node.native}`" :title="node.multi_native_reason || ''"></td>
+                            <td>
+                                <span
+                                    :class="{'source-ping0': node.source === 'ping0', 'source-ippure': node.source === 'ippure'}"
+                                    x-text="node.source"></span>
+                            </td>
+                            <td>
+                                <button class="small outline" @click="startEdit(node)">✏️</button>
+                                <button class="small outline secondary" @click="recheckNode(node)"
+                                    :disabled="isRunning || isRechecking" title="重新检测此节点">
+                                    <span x-show="!isRechecking || editingId === node.id">🔄</span>
+                                    <span x-show="isRechecking && editingId !== node.id" style="opacity:0.5">⏳</span>
+                                </button>
+                                <button class="small outline danger" @click="deleteNode(node)">🗑️</button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <!-- Export Modal -->
+        <dialog x-ref="exportModal">
+            <article>
+                <header>
+                    <button aria-label="Close" class="close" @click="$refs.exportModal.close()"></button>
+                    <h3>导出 YAML</h3>
+                </header>
+                <!-- CodeMirror container for syntax highlighting -->
+                <div id="export-editor" style="margin-bottom: 1rem;"></div>
+                <div x-show="subscribeUrl" style="margin-bottom: 1rem;">
+                    <label><small>订阅更新链接 — Verge 只需导入一次，之后对该配置点「更新」即可刷新检测结果与流量</small></label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input readonly :value="absoluteSubscribeUrl()" onclick="this.select()">
+                        <button class="secondary" @click="copySubscribeUrl">🔗 复制链接</button>
+                    </div>
+                </div>
+                <footer>
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <button @click="downloadYaml">💾 下载</button>
+                        <button class="secondary" @click="copyYaml">📋 复制</button>
+                        <button class="contrast" @click="importToClash" style="margin-left: auto;">🚀 导入 Clash</button>
+                    </div>
+                </footer>
+            </article>
+        </dialog>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
