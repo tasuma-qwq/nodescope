@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.jpg -text
+*.png -text
+LICENSES/GPL-3.0.txt -text
+static/vendor/** -text
