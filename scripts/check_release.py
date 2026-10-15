@@ -51,7 +51,8 @@ def main():
         if len(data) != entry["bytes"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
             issues.append(f"vendor checksum mismatch: {entry['path']}")
     for required in ("LICENSE", "LICENSES/GPL-3.0.txt", "THIRD_PARTY_NOTICES.md", "README.md",
-                     "README_EN.md", "SECURITY.md", ".github/workflows/tests.yml"):
+                     "README_EN.md", "SECURITY.md", ".github/workflows/tests.yml",
+                     "start.cmd", "一键检测当前订阅.cmd", "requirements-cli.txt", "scripts/launch_cli.py"):
         if Path(required) not in paths:
             issues.append(f"required publication file missing: {required}")
     if issues:

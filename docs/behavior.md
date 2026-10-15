@@ -1,5 +1,7 @@
 # 行为与数据口径
 
+默认双击入口是 `一键检测当前订阅.cmd` / `start.cmd`，自动准备 CLI 环境并运行当前订阅检测，默认附带 `--unlock`。它们不启动 Web。`web.py` 与下述 Web API 是可选高级入口，需额外安装 `requirements.txt`。
+
 `pure_score` 表示污染度，越低越好，风险贡献为 `int(pure * 0.5)`。综合风险参考 abuse、IPQS、Tor、机房与地区一致性等信号；proxy / VPN 加分要求至少两个来源一致。DNSBL 真命中触发至少 90 分，Spamhaus 拒查码不算命中；未知不是 0。
 
 DNS 泄漏、IPv6 与服务访问只作展示，不计入污染度与综合评分，不污染 IP 缓存。WebRTC 需要用户主动点击，未执行不能宣称无泄漏。

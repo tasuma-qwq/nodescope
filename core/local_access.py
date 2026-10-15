@@ -1,8 +1,6 @@
 """Protect the unauthenticated loopback UI against cross-site requests."""
 from urllib.parse import urlsplit
 
-from starlette.responses import JSONResponse
-
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
@@ -39,6 +37,7 @@ class LocalAccessMiddleware:
         headers = {key.decode("latin1").lower(): value.decode("latin1")
                    for key, value in scope.get("headers", [])}
         if not is_local_request(headers, scope.get("scheme", "http")):
+            from starlette.responses import JSONResponse
             response = JSONResponse({"detail": "NodeScope 仅允许本地同源访问"}, status_code=403)
             await response(scope, receive, send)
             return

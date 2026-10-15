@@ -1,0 +1,7 @@
+# One-click detection; no Web server or browser installation needed.
+aiohttp>=3.12,<4
+playwright>=1.50,<2
+curl_cffi>=0.13,<1
+ruamel.yaml>=0.18,<0.20
+PyYAML>=6.0.3,<7
+dnspython>=2.8,<3

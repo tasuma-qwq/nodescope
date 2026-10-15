@@ -1008,6 +1008,15 @@ async def main() -> int:
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="NodeScope：读取 Clash Verge 当前订阅并直接检测，无需网页。")
+    parser.add_argument("--unlock", action="store_true", help="附带 AI / 流媒体端点探测")
+    parser.add_argument("--serial", action="store_true", help="强制串行检测")
+    parser.add_argument("--no-history", action="store_true", help="不保存本地检测历史")
+    parser.add_argument("--trend", nargs="?", const="", help="查看节点关键词的历史趋势")
+    parser.add_argument("--clean-exports", action="store_true", help="清理旧导出，保留最新文件")
+    parser.add_argument("--serve", action="store_true", help=argparse.SUPPRESS)
+    parser.parse_args()
     if "--serve" in sys.argv:
         serve_latest_forever()
         raise SystemExit(0)

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 - 2026-10-15
+
+- 默认改为下载后双击直接检测当前 Clash Verge Rev 订阅，行为对齐原桌面快捷方式（默认 `--unlock`）。
+- `start.cmd` 与中文一键入口使用相对路径，自动创建虚拟环境、安装 CLI 依赖并保留结果窗口；安装失败不会开始检测。
+- CLI 不再依赖 FastAPI / Web 服务；新增安全的 `--help`，不读取订阅或启动检测。
+- README 改为一键检测流程，Web 保留为可选高级入口。
+
 ## 0.1.0 - 2026-10-14
 
 首次以 NodeScope 名称公开发布，基于 tombcato/clash-ip-checker 与已有本地改进。
